@@ -222,9 +222,7 @@ with tab_auth:
     with col_login:
         with st.container(border=True):
             st.subheader("Log in")
-            # No real login/password check yet (that needs the auth work we've
-            # postponed) — this just fetches the user by id and "remembers" them
-            # for the session, so the rest of the app knows who's acting.
+            # No real login/password check yet
             st.caption("No password check yet — just pick your user id for this session.")
             login_id = st.number_input("Your user ID", min_value=1, step=1, key="login_id")
             if st.button("Log in"):
@@ -423,8 +421,7 @@ with tab_profile:
     else:
         my_id = st.session_state.current_user["id"]
 
-        # Re-fetch fresh instead of trusting the cached session copy —
-        # in case bio/fullName changed via editUser since login.
+        
         response = api_get(f"/users/{my_id}")
         if response is not None and response.status_code == 200:
             me = response.json()
@@ -444,9 +441,7 @@ with tab_profile:
                         "New password", type="password",
                         help="Leave blank to keep your current password.",
                     )
-                    # username/email are intentionally NOT editable here —
-                    # UserService.editUser excludes them on purpose, to avoid
-                    # bypassing the duplicate-check that only runs on createUser.
+                    
                     st.caption("Username and email can't be changed here.")
                     profile_submitted = st.form_submit_button("Save changes")
 
@@ -490,10 +485,7 @@ with tab_profile:
         posts_response = api_get("/posts")
         if posts_response is not None and posts_response.status_code == 200:
             all_posts = posts_response.json()
-            # Client-side filter: no dedicated "posts by user" endpoint exists
-            # yet, so this pulls the full feed and keeps only this user's own
-            # posts. Fine at small scale; would need a backend endpoint
-            # (mirroring CommentRep.findByPostId) if the feed ever grows large.
+            
             my_posts = [p for p in all_posts if (p.get("user") or {}).get("id") == my_id]
 
             if not my_posts:
@@ -516,9 +508,7 @@ with tab_profile:
                             col_save, col_cancel = st.columns(2)
                             with col_save:
                                 if st.button("Save", key=f"save_{post_id}"):
-                                    # PostService.editPost returns void, so a
-                                    # successful call just comes back 200 with
-                                    # no body — nothing to read from the response.
+                                   
                                     save_response = api_put(
                                         f"/posts/{post_id}",
                                         params={"caption": new_caption},
@@ -552,9 +542,7 @@ with tab_profile:
                                 confirm_key = f"confirm_delete_{post_id}"
                                 if st.session_state.get(confirm_key, False):
                                     if st.button("Confirm delete?", key=f"confirm_btn_{post_id}"):
-                                        # Deleting a post cascades to its comments
-                                        # on the backend (PostService.deletePost) —
-                                        # so this removes both in one call.
+                                       
                                         del_response = api_delete(f"/posts/{post_id}")
                                         if del_response is not None:
                                             if del_response.status_code == 200:
